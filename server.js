@@ -16,11 +16,30 @@ function loadSymbols() {
   return JSON.parse(fs.readFileSync(SYMBOLS_FILE, "utf-8"));
 }
 
+/** 사설망(내부망) IPv4 주소 목록을 검사해 반환한다(루프백/내부 인터페이스 제외). */
+function getLocalIPs() {
+  const nets = os.networkInterfaces();
+  const addresses = [];
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] ?? []) {
+      if (net.family === "IPv4" && !net.internal) {
+        addresses.push(net.address);
+      }
+    }
+  }
+  return addresses;
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/symbols", (req, res) => {
   res.json(loadSymbols());
+});
+
+/** 현재 서버가 접속 가능한 내부망 IP와 포트 정보를 반환한다(UI 표시용). */
+app.get("/api/server-info", (req, res) => {
+  res.json({ port: PORT, localIPs: getLocalIPs() });
 });
 
 /** 등록된 전체 종목을 예측하고 결과를 리포트에 저장한다. */
@@ -68,20 +87,6 @@ app.get("/api/candidates", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-/** 사설망(내부망) IPv4 주소 목록을 검사해 반환한다(루프백/내부 인터페이스 제외). */
-function getLocalIPs() {
-  const nets = os.networkInterfaces();
-  const addresses = [];
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name] ?? []) {
-      if (net.family === "IPv4" && !net.internal) {
-        addresses.push(net.address);
-      }
-    }
-  }
-  return addresses;
-}
 
 app.listen(PORT, "0.0.0.0", () => {
   const localIPs = getLocalIPs();

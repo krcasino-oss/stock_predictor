@@ -53,6 +53,7 @@
   .card.is-candidate { border-color:#e08e2b; box-shadow:0 0 0 1px #e08e2b inset; }
 
   .log-section h2 { font-size:14px; color:#245474; margin:16px 0 6px; }
+  .server-ip { font-size:10.5px; font-weight:normal; color:#9aa7b0; }
   .log-hint { font-size:11px; color:#697783; margin-bottom:6px; }
   #logbox {
     background:#f4f8fb; border:1px solid #9bb; border-radius:4px;
@@ -79,7 +80,7 @@
   <div id="list"></div>
 
   <div class="log-section">
-    <h2>📋 판단 로그 (데이터 추출방법 · 점수 근거)</h2>
+    <h2>📋 판단 로그 (데이터 추출방법 · 점수 근거) <span id="serverIp" class="server-ip"></span></h2>
     <div class="log-hint">위 카드의 trend/rsi/macd/bollinger/volume 막대를 누르면 해당 설명으로 바로 이동합니다.</div>
     <div id="logbox"></div>
   </div>
@@ -227,6 +228,18 @@ btnRun.addEventListener('click', () => runPredict(false));
 btnRefresh.addEventListener('click', () => runPredict(true));
 chkCandidatesOnly.addEventListener('change', renderAll);
 
+async function loadServerInfo() {
+  const serverIpEl = document.getElementById('serverIp');
+  try {
+    const res = await fetch('/api/server-info');
+    const data = await res.json();
+    serverIpEl.textContent = (data.localIPs || []).join(' · ');
+  } catch (err) {
+    serverIpEl.textContent = '서버 IP 확인 불가';
+  }
+}
+
+loadServerInfo();
 // 페이지 로드시 캐시 기반으로 자동 1회 실행
 runPredict(false);
 </script>
