@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# 데이터 캐시 및 생성된 리포트 (재생성 가능하므로 커밋하지 않음)
+data/*.csv
+reports/*.json
+
+# 환경 변수
+.env
