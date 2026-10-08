@@ -56,6 +56,15 @@ test("강한 하락 정렬 + 과매수 RSI + 거래량 급감이면 STRONG_SELL"
   assert.ok(result.totalScore <= -6);
 });
 
+test("explain은 각 지표별 데이터 출처와 판단근거 문자열을 포함한다", () => {
+  const result = scoreIndicators(baseIndicators({ volumeRatio: 2.5 }));
+  for (const key of ["trend", "rsi", "macd", "bollinger", "volume"]) {
+    assert.ok(typeof result.explain[key].data === "string" && result.explain[key].data.length > 0);
+    assert.ok(typeof result.explain[key].reason === "string" && result.explain[key].reason.length > 0);
+  }
+  assert.match(result.explain.volume.reason, /\(\+2\)/);
+});
+
 test("confidence는 0~100 범위를 벗어나지 않는다", () => {
   const ind = baseIndicators({
     sma5: 110,
