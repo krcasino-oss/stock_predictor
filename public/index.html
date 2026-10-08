@@ -13,7 +13,7 @@
   }
   .wrap { width:100%; max-width:480px; }
   h1 { font-size:18px; color:#245474; margin:4px 0 12px; text-align:center; }
-  .toolbar { display:flex; gap:8px; margin-bottom:12px; }
+  .toolbar { display:flex; gap:8px; margin-top:16px; margin-bottom:12px; }
   .btn {
     flex:1; border:none; border-radius:6px; padding:10px; font-size:14px; font-weight:bold;
     color:#fff; background:#7fa8c9; cursor:pointer;
@@ -67,10 +67,6 @@
 <body>
 <div class="wrap">
   <h1>📈 주식전망 예측시스템 (2단계)</h1>
-  <div class="toolbar">
-    <button class="btn" id="btnRun">예측 실행 (캐시)</button>
-    <button class="btn refresh" id="btnRefresh">최신 데이터로 갱신</button>
-  </div>
   <div id="status"></div>
   <div id="list"></div>
 
@@ -78,6 +74,11 @@
     <h2>📋 판단 로그 (데이터 추출방법 · 점수 근거)</h2>
     <div class="log-hint">위 카드의 trend/rsi/macd/bollinger/volume 막대를 누르면 해당 설명으로 바로 이동합니다.</div>
     <div id="logbox"></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn" id="btnRun">예측 실행 (캐시)</button>
+    <button class="btn refresh" id="btnRefresh">최신 데이터로 갱신</button>
   </div>
 </div>
 
