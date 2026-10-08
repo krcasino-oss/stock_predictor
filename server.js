@@ -2,6 +2,7 @@
 
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 const express = require("express");
 
 const { predictAll, predictOne, saveDailyReport, narrowCandidates } = require("./lib/predict");
@@ -68,8 +69,31 @@ app.get("/api/candidates", async (req, res) => {
   }
 });
 
+/** 사설망(내부망) IPv4 주소 목록을 검사해 반환한다(루프백/내부 인터페이스 제외). */
+function getLocalIPs() {
+  const nets = os.networkInterfaces();
+  const addresses = [];
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] ?? []) {
+      if (net.family === "IPv4" && !net.internal) {
+        addresses.push(net.address);
+      }
+    }
+  }
+  return addresses;
+}
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`stock-predictor 서버 실행 중: http://0.0.0.0:${PORT}`);
+  const localIPs = getLocalIPs();
+  console.log(`stock-predictor 서버 실행 중 (포트 ${PORT})`);
+  console.log(`  - http://localhost:${PORT}`);
+  if (localIPs.length === 0) {
+    console.log("  - (내부망 IP를 찾지 못했습니다. 네트워크 연결 상태를 확인하세요.)");
+  } else {
+    for (const ip of localIPs) {
+      console.log(`  - http://${ip}:${PORT} (같은 네트워크의 다른 기기에서 접속 가능)`);
+    }
+  }
 });
 
 module.exports = app;
