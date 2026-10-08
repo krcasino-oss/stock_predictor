@@ -76,14 +76,15 @@
 <div class="wrap">
   <h1>📈 주식전망 예측시스템 (2단계)</h1>
   <div id="status"></div>
-  <label class="candidate-toggle"><input type="checkbox" id="chkCandidatesOnly"> ⚡ 거래량·수급 이상징후 후보만 보기</label>
-  <div id="list"></div>
 
   <div class="log-section">
     <h2>📋 판단 로그 (데이터 추출방법 · 점수 근거) <span id="serverIp" class="server-ip"></span></h2>
     <div class="log-hint">위 카드의 trend/rsi/macd/bollinger/volume 막대를 누르면 해당 설명으로 바로 이동합니다.</div>
     <div id="logbox"></div>
   </div>
+
+  <label class="candidate-toggle"><input type="checkbox" id="chkCandidatesOnly"> ⚡ 거래량·수급 이상징후 후보만 보기</label>
+  <div id="list"></div>
 
   <div class="toolbar">
     <button class="btn" id="btnRun">예측 실행 (캐시)</button>
