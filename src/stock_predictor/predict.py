@@ -16,11 +16,14 @@ import json
 from pathlib import Path
 
 from .data_fetch import fetch_ohlcv
+from .report_html import render_detail_html, render_history_index, render_home_index
 from .scoring import score_symbol
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SYMBOLS_FILE = BASE_DIR / "config" / "symbols.json"
 REPORTS_DIR = BASE_DIR / "reports"
+DOCS_DIR = BASE_DIR / "docs"
+MANIFEST_FILE = DOCS_DIR / "manifest.json"
 
 
 def load_watchlist() -> list[dict]:
@@ -43,6 +46,62 @@ def save_report(payload: dict) -> Path:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     return path
+
+
+def load_manifest() -> dict:
+    if not MANIFEST_FILE.exists():
+        return {}
+    with open(MANIFEST_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_manifest(manifest: dict) -> None:
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(MANIFEST_FILE, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, ensure_ascii=False, indent=2)
+
+
+def publish_html_report(payload: dict) -> Path:
+    """종목 상세 페이지, 이력 목록 페이지를 docs/reports/{symbol}/ 아래에 생성한다.
+
+    날짜별 라벨/방향 정보는 history.json에 누적 저장해, 이력 페이지가 항상
+    과거 실행 결과의 정확한 등급을 보여줄 수 있도록 한다.
+    """
+    symbol_dir = DOCS_DIR / "reports" / payload["symbol"]
+    symbol_dir.mkdir(parents=True, exist_ok=True)
+
+    detail_path = symbol_dir / f"{payload['as_of']}.html"
+    detail_path.write_text(render_detail_html(payload), encoding="utf-8")
+
+    history_file = symbol_dir / "history.json"
+    history = {}
+    if history_file.exists():
+        with open(history_file, encoding="utf-8") as f:
+            history = {entry["as_of"]: entry for entry in json.load(f)}
+
+    history[payload["as_of"]] = {
+        "as_of": payload["as_of"],
+        "file": f"{payload['as_of']}.html",
+        "label": payload["label"],
+        "direction": payload["direction"],
+    }
+    entries = sorted(history.values(), key=lambda e: e["as_of"], reverse=True)
+    with open(history_file, "w", encoding="utf-8") as f:
+        json.dump(entries, f, ensure_ascii=False, indent=2)
+
+    history_path = symbol_dir / "index.html"
+    history_path.write_text(
+        render_history_index(payload["symbol"], payload["name"], entries), encoding="utf-8"
+    )
+    return detail_path
+
+
+def publish_home_index(manifest: dict) -> Path:
+    latest = sorted(manifest.values(), key=lambda item: item["symbol"])
+    DOCS_DIR.mkdir(parents=True, exist_ok=True)
+    home_path = DOCS_DIR / "index.html"
+    home_path.write_text(render_home_index(latest), encoding="utf-8")
+    return home_path
 
 
 def print_summary(payload: dict) -> None:
@@ -69,6 +128,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
     exit_code = 0
+    manifest = load_manifest()
     for item in watchlist:
         try:
             payload = predict_one(item["symbol"], item["name"], use_cache=not args.no_cache)
@@ -80,6 +140,14 @@ def main(argv: list[str] | None = None) -> int:
         print_summary(payload)
         report_path = save_report(payload)
         print(f"  -> 리포트 저장: {report_path}")
+
+        html_path = publish_html_report(payload)
+        manifest[payload["symbol"]] = payload
+        print(f"  -> HTML 리포트: {html_path}")
+
+    home_path = publish_home_index(manifest)
+    save_manifest(manifest)
+    print(f"홈 페이지 갱신: {home_path}")
 
     return exit_code
 
