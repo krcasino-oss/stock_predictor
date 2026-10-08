@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#dfe9f2">
+<title>주식전망 예측시스템</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    background:#dfe9f2; margin:0; padding:12px; font-family: -apple-system, "Malgun Gothic", sans-serif;
+    display:flex; justify-content:center;
+  }
+  .wrap { width:100%; max-width:480px; }
+  h1 { font-size:18px; color:#245474; margin:4px 0 12px; text-align:center; }
+  .toolbar { display:flex; gap:8px; margin-bottom:12px; }
+  .btn {
+    flex:1; border:none; border-radius:6px; padding:10px; font-size:14px; font-weight:bold;
+    color:#fff; background:#7fa8c9; cursor:pointer;
+  }
+  .btn.refresh { background:#3ecf5e; }
+  .btn:disabled { background:#aab6bf; }
+  #status { text-align:center; font-size:12px; color:#697783; margin-bottom:10px; min-height:16px; }
+  .card {
+    background:#e9f1f8; border:1px solid #c6d6e2; border-radius:10px; padding:12px; margin-bottom:10px;
+  }
+  .card-top { display:flex; justify-content:space-between; align-items:baseline; }
+  .name { font-size:15px; font-weight:bold; color:#1d1616; }
+  .symbol { font-size:12px; color:#697783; margin-left:4px; }
+  .label {
+    font-size:13px; font-weight:bold; padding:3px 8px; border-radius:12px; color:#fff;
+  }
+  .label.STRONG_BUY { background:#ff4d4d; }
+  .label.BUY { background:#ff9a9a; }
+  .label.HOLD { background:#9bb; }
+  .label.SELL { background:#7fa8d6; }
+  .label.STRONG_SELL { background:#2c29fc; }
+  .row { display:flex; justify-content:space-between; font-size:12px; color:#333; margin-top:6px; }
+  .bars { display:flex; gap:4px; margin-top:8px; }
+  .bar { flex:1; text-align:center; font-size:10px; color:#697783; }
+  .bar .fill { height:6px; border-radius:3px; background:#d8e2ea; position:relative; overflow:hidden; }
+  .bar .fill span { position:absolute; top:0; bottom:0; background:#3ecf5e; }
+  .error { color:#c0392b; font-size:12px; }
+  .asof { font-size:11px; color:#9aa7b0; margin-top:4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📈 주식전망 예측시스템 (2단계)</h1>
+  <div class="toolbar">
+    <button class="btn" id="btnRun">예측 실행 (캐시)</button>
+    <button class="btn refresh" id="btnRefresh">최신 데이터로 갱신</button>
+  </div>
+  <div id="status"></div>
+  <div id="list"></div>
+</div>
+
+<script>
+const statusEl = document.getElementById('status');
+const listEl = document.getElementById('list');
+const btnRun = document.getElementById('btnRun');
+const btnRefresh = document.getElementById('btnRefresh');
+
+function setBusy(busy) {
+  btnRun.disabled = busy;
+  btnRefresh.disabled = busy;
+}
+
+function barWidth(score) {
+  // score: -2..2 -> 0..100%
+  const pct = ((score + 2) / 4) * 100;
+  return Math.max(0, Math.min(100, pct));
+}
+
+function renderCard(item) {
+  if (item.error) {
+    return '<div class="card"><div class="card-top"><span class="name">' + item.name + '</span>' +
+      '<span class="symbol">' + item.symbol + '</span></div>' +
+      '<div class="error">오류: ' + item.error + '</div></div>';
+  }
+  const s = item.score;
+  const ind = item.indicators;
+  const bars = Object.entries(s.breakdown).map(([k, v]) => {
+    return '<div class="bar"><div class="fill"><span style="left:0;width:' + barWidth(v) + '%"></span></div>' + k + '(' + v + ')</div>';
+  }).join('');
+  return '<div class="card">' +
+    '<div class="card-top">' +
+      '<span><span class="name">' + item.name + '</span><span class="symbol">' + item.symbol + '</span></span>' +
+      '<span class="label ' + s.label + '">' + s.labelKo + '</span>' +
+    '</div>' +
+    '<div class="row"><span>현재가</span><span>' + Number(ind.lastClose).toLocaleString() + '원</span></div>' +
+    '<div class="row"><span>종합점수</span><span>' + s.totalScore + ' / 신뢰도 ' + s.confidence + '%</span></div>' +
+    '<div class="bars">' + bars + '</div>' +
+    '<div class="asof">기준일: ' + item.asOf + '</div>' +
+  '</div>';
+}
+
+async function runPredict(refresh) {
+  setBusy(true);
+  statusEl.textContent = '예측 실행 중... (종목이 많으면 시간이 걸릴 수 있습니다)';
+  listEl.innerHTML = '';
+  try {
+    const res = await fetch('/api/predict' + (refresh ? '?refresh=1' : ''));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const sorted = [...data.results].sort((a, b) => (b.score?.totalScore ?? -999) - (a.score?.totalScore ?? -999));
+    listEl.innerHTML = sorted.map(renderCard).join('');
+    statusEl.textContent = '완료: ' + new Date(data.date).toLocaleString('ko-KR');
+  } catch (err) {
+    statusEl.textContent = '오류: ' + err.message;
+  } finally {
+    setBusy(false);
+  }
+}
+
+btnRun.addEventListener('click', () => runPredict(false));
+btnRefresh.addEventListener('click', () => runPredict(true));
+
+// 페이지 로드시 캐시 기반으로 자동 1회 실행
+runPredict(false);
+</script>
+</body>
+</html>

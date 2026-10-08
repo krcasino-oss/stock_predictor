@@ -1,61 +1,81 @@
-# stock_predictor — 주식전망 예측시스템 (2단계)
+# stock_predictor (2단계 주식전망 예측시스템)
 
-> 1단계 `kb-trading-bot`(단타공방 실전매매)은 완성 단계이며, 이 저장소는 독립된 **2단계: 주식전망 예측시스템**입니다.
-> 두 시스템은 지금은 완전히 분리되어 각자 개발되며, 두 시스템이 모두 완성 단계에 도달하면 사람(운영자)이 연결고리가 되어
-> 최종적으로 하나의 "주식시황 예측시스템"으로 통합하는 것을 목표로 합니다.
+`kb-trading-bot`(1단계 실전 자동매매)과 완전히 분리된 **조회·분석 전용** 시스템입니다.
+1단계와 동일하게 **Node.js + Express**로 만들어졌고, 폰(Termux)에서 직접 서버를 실행해
+같은 기기의 브라우저로 결과를 확인하는 방식입니다. 실제 매매 주문 권한은 없습니다.
 
-## 개요
+## 특징
 
-개별 종목의 **단기(일 단위) 상승·하락 방향**을 기술적 지표 기반 규칙/점수화 모델로 예측합니다.
+- 데이터 출처: 네이버 금융 공개 일봉 데이터(무료, 인증 불필요)
+- 지표: 이동평균(SMA/EMA), RSI, MACD, 볼린저밴드, 거래량 배율
+- 점수화: 5개 지표를 각각 -2~+2점으로 환산해 합산 → `적극매수/매수/관망/매도/적극매도` 5단계 라벨
+- 결과는 `reports/YYYY-MM-DD.json`에 매일 누적 저장(추후 적중률 검증용)
+- 데이터는 당일 1회만 수집하고 `data/{종목코드}.json`에 캐시(같은 날 재요청 시 재사용)
 
-- 대상 종목: 삼성전자(005930) 단일 종목으로 시작 → `config/symbols.json`에 종목을 추가해 점진적으로 확대
-- 과거 시세(OHLCV): 무료 공개 데이터(FinanceDataReader)로 수집 (KB증권 Open API는 현재가 조회만 지원하므로 실시간 연동은 추후 단계에서 추가)
-- 예측 방식: 이동평균(SMA5/20/60) 정배열·역배열, RSI14, MACD, 볼린저밴드, 거래량 비율을 각각 점수화해 합산 → 강한 매수 / 매수 / 중립 / 매도 / 강한 매도 등급과 신뢰도 산출
+## 설치 및 실행
 
-## 설치
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pip install -e .
+```bash
+npm install
+npm start
 ```
 
-## 실행
+서버가 뜨면 아래 주소로 접속합니다.
 
-```powershell
-# config/symbols.json에 등록된 전체 종목 실행
-.\.venv\Scripts\python.exe -m stock_predictor.predict
-
-# 특정 종목만 실행, 캐시 무시하고 최신 데이터로 재수집
-.\.venv\Scripts\python.exe -m stock_predictor.predict --symbol 005930 --no-cache
+```
+http://127.0.0.1:3100
 ```
 
-실행 결과는 콘솔 요약과 함께 `reports/{종목코드}_{날짜}.json` 파일로 저장됩니다.
+### Termux(폰)에서 실행하는 경우
+
+1단계 `kb-trading-bot`과 동일한 방식입니다.
+
+```bash
+cd stock_predictor
+npm install
+npm start
+```
+
+그 다음 같은 폰의 크롬에서 `http://127.0.0.1:3100` 으로 접속합니다.
+
+> 1단계(`kb-trading-bot`, 포트 3000)와 2단계(`stock_predictor`, 포트 3100)는
+> 포트가 달라 동시에 실행해도 서로 충돌하지 않습니다.
+
+## 종목 추가
+
+`config/symbols.json`에 종목코드와 이름을 추가하면 됩니다.
+
+```json
+[
+  { "symbol": "005930", "name": "삼성전자" },
+  { "symbol": "000660", "name": "SK하이닉스" }
+]
+```
+
+## API
+
+- `GET /api/symbols` : 등록된 종목 목록
+- `GET /api/predict` : 등록된 전체 종목 예측(캐시 사용), `?refresh=1`이면 최신 데이터로 재수집
+- `GET /api/predict/:symbol` : 단일 종목 즉시 예측(등록 여부 무관)
 
 ## 테스트
 
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests -v
+```bash
+npm test
 ```
 
-## 프로젝트 구조
+`node --test` 기반 단위테스트로 데이터 파싱, 지표 계산, 점수화 로직을 검증합니다.
 
-```
-config/symbols.json        예측 대상 종목 목록 (종목코드/종목명)
-src/stock_predictor/
-  data_fetch.py             과거 OHLCV 수집 및 일 단위 캐시
-  indicators.py              SMA/EMA/RSI/MACD/볼린저밴드/거래량 비율 계산
-  scoring.py                 지표별 점수화 및 등급(강한 매수~강한 매도) 산출
-  predict.py                 CLI 진입점 (watchlist 순회, 리포트 저장)
-tests/                       indicators/scoring 단위 테스트
-data/                        과거 시세 캐시(CSV, 커밋 제외)
-reports/                     예측 리포트(JSON, 커밋 제외)
-```
+## 로드맵 (장기)
 
-## 향후 로드맵
+현재는 "1차: 가격·거래량·지표 기반 점수화" 단계입니다. 이후 아래 순서로 고도화할 예정입니다.
 
-1. **지표 고도화**: 백테스트로 임계값/가중치 조정, 추가 지표(이격도, 스토캐스틱 등) 검토
-2. **종목 확대**: 코스피200 등으로 대상 확대
-3. **실시간 연동**: KB증권 Open API 현재가 조회(`lib/kbApi.js`와 동일 인증 체계)를 Python에서도 재사용해 장중 갱신 지원
-4. **두 시스템 통합**: `kb-trading-bot`(매매 실행)과 `stock_predictor`(시황 예측)가 각각 완성되면, 예측 리포트(JSON)를 매매 시스템이 참고할 수 있는 형태로 연결하는 "주식시황 예측시스템" 통합 설계
+1. 전체 종목 1차 필터(거래정지/관리종목/저유동성 제외)
+2. 거래량·수급 이상징후 탐색으로 후보 축소
+3. OpenDART 공시 연동(공시 성격 분류 + 발생 시각 기록)
+4. 시장 전체 온도(시장점수) 및 업종 강도 반영
+5. 단기 과열 방지 로직(급등 추격 방지)
+6. 예측 결과 자동 검증(1·3·5·10일 후 수익률 추적, 점수 구간별 적중률 집계)
+7. 충분한 데이터가 쌓인 후 머신러닝 도입(3단계)
 
+1단계(자동매매)와 2단계(예측)는 역할을 분리해 유지합니다. 예측시스템은 후보를 제시할 뿐,
+최종 매매 여부는 사용자가 확인한 뒤 1단계 자동매매 시스템에서 별도로 실행합니다.

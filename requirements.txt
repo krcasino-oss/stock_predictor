@@ -1,5 +1,0 @@
-pandas>=2.2
-numpy>=1.26
-# PyPI 배포명은 하이픈 포함 finance-datareader 이며, import 시에는 FinanceDataReader로 사용한다.
-finance-datareader>=0.9.50
-pytest>=8.0
