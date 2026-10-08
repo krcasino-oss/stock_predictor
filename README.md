@@ -56,6 +56,25 @@ npm start
 - `GET /api/symbols` : 등록된 종목 목록
 - `GET /api/predict` : 등록된 전체 종목 예측(캐시 사용), `?refresh=1`이면 최신 데이터로 재수집
 - `GET /api/predict/:symbol` : 단일 종목 즉시 예측(등록 여부 무관)
+- `GET /api/candidates` : 거래량·수급 이상징후가 포착된 종목만 추려서 반환(후보 축소), `?refresh=1` 지원
+
+### 거래량·수급 이상징후(anomaly)
+
+`predict` 결과 각 종목에 `anomaly`, `isCandidate` 필드가 추가됩니다.
+
+- `anomaly.level`: `HIGH`/`MEDIUM`/`NONE` — 신호 강도
+- `anomaly.signals[]`: 사람이 읽을 수 있는 탐지 근거 목록
+  - `VOLUME_SURGE` / `VOLUME_COLLAPSE`: 평균 대비 거래량 폭증/급감
+  - `VOLUME_STREAK`: 거래량 연속 증가일수(수급 유입 지속성 proxy)
+  - `BEARISH_DIVERGENCE`: 가격 상승 + 거래량 감소(상승 동력 약화 경계)
+  - `CAPITULATION_RISK`: 가격 하락 + 거래량 급증(투매/변동성 확대 경계)
+  - `BREAKOUT_HIGH` / `BREAKOUT_LOW`: 거래량 동반 신고가/신저가 갱신
+- `isCandidate`: `anomaly.level`이 `NONE`이 아니면 `true` → "관심 후보"로 분류
+
+> ⚠️ 네이버 금융 무료 API는 OHLCV(가격·거래량)만 제공하고 외국인/기관 등
+> 투자자별 순매수("진짜 수급") 데이터는 제공하지 않습니다. 현재는 거래량 패턴을
+> 수급의 대리 신호로 사용하며, 투자자별 순매수 연동은 KRX/증권사 API가 필요해
+> 별도 과제로 남겨둡니다.
 
 ## 테스트
 
@@ -70,7 +89,9 @@ npm test
 현재는 "1차: 가격·거래량·지표 기반 점수화" 단계입니다. 이후 아래 순서로 고도화할 예정입니다.
 
 1. 전체 종목 1차 필터(거래정지/관리종목/저유동성 제외)
-2. 거래량·수급 이상징후 탐색으로 후보 축소
+2. ✅ 거래량·수급 이상징후 탐색으로 후보 축소 — `lib/anomaly.js`로 구현(거래량 급증/급감,
+   연속 증가일수, 가격-거래량 다이버전스, 거래량 동반 신고가/신저가 돌파). `/api/candidates`로 조회.
+   단, 외국인/기관 투자자별 순매수 데이터 연동은 미포함(향후 과제).
 3. OpenDART 공시 연동(공시 성격 분류 + 발생 시각 기록)
 4. 시장 전체 온도(시장점수) 및 업종 강도 반영
 5. 단기 과열 방지 로직(급등 추격 방지)

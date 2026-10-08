@@ -4,7 +4,7 @@
   "description": "주식전망 예측시스템 (2단계) - 기술적 지표 기반 점수화",
   "main": "server.js",
   "scripts": {
-    "test": "node --check server.js && node --check lib/dataFetch.js && node --check lib/indicators.js && node --check lib/scoring.js && node --check lib/predict.js && node --test",
+    "test": "node --check server.js && node --check lib/dataFetch.js && node --check lib/indicators.js && node --check lib/scoring.js && node --check lib/predict.js && node --check lib/anomaly.js && node --test",
     "start": "node server.js"
   },
   "keywords": [],

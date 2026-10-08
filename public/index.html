@@ -45,6 +45,13 @@
   .bar { cursor:pointer; }
   .bar.active .fill { box-shadow:0 0 0 1px #3ecf5e inset; }
 
+  .anomaly { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .chip { font-size:10.5px; padding:3px 7px; border-radius:10px; color:#fff; }
+  .chip.HIGH { background:#c0392b; }
+  .chip.MEDIUM { background:#e08e2b; }
+  .candidate-toggle { display:flex; align-items:center; gap:6px; font-size:12px; color:#245474; margin:4px 0 0; }
+  .card.is-candidate { border-color:#e08e2b; box-shadow:0 0 0 1px #e08e2b inset; }
+
   .log-section h2 { font-size:14px; color:#245474; margin:16px 0 6px; }
   .log-hint { font-size:11px; color:#697783; margin-bottom:6px; }
   #logbox {
@@ -68,6 +75,7 @@
 <div class="wrap">
   <h1>📈 주식전망 예측시스템 (2단계)</h1>
   <div id="status"></div>
+  <label class="candidate-toggle"><input type="checkbox" id="chkCandidatesOnly"> ⚡ 거래량·수급 이상징후 후보만 보기</label>
   <div id="list"></div>
 
   <div class="log-section">
@@ -88,6 +96,9 @@ const listEl = document.getElementById('list');
 const logboxEl = document.getElementById('logbox');
 const btnRun = document.getElementById('btnRun');
 const btnRefresh = document.getElementById('btnRefresh');
+const chkCandidatesOnly = document.getElementById('chkCandidatesOnly');
+
+let lastResults = [];
 
 const INDICATOR_TITLE = {
   trend: '추세(이동평균 정배열/역배열)',
@@ -124,7 +135,12 @@ function renderCard(item) {
     return '<div class="bar" data-symbol="' + item.symbol + '" data-indicator="' + k + '" onclick="focusLog(this)">' +
       '<div class="fill"><span style="left:0;width:' + barWidth(v) + '%"></span></div>' + k + '(' + v + ')</div>';
   }).join('');
-  return '<div class="card">' +
+  const anomalySignals = item.anomaly?.signals ?? [];
+  const chips = anomalySignals.map((sig) => {
+    return '<span class="chip ' + sig.level + '">' + escapeHtml(sig.message) + '</span>';
+  }).join('');
+  const anomalyHtml = chips ? '<div class="anomaly">' + chips + '</div>' : '';
+  return '<div class="card' + (item.isCandidate ? ' is-candidate' : '') + '">' +
     '<div class="card-top">' +
       '<span><span class="name">' + item.name + '</span><span class="symbol">' + item.symbol + '</span></span>' +
       '<span class="label ' + s.label + '">' + s.labelKo + '</span>' +
@@ -132,6 +148,7 @@ function renderCard(item) {
     '<div class="row"><span>현재가</span><span>' + Number(ind.lastClose).toLocaleString() + '원</span></div>' +
     '<div class="row"><span>종합점수</span><span>' + s.totalScore + ' / 신뢰도 ' + s.confidence + '%</span></div>' +
     '<div class="bars">' + bars + '</div>' +
+    anomalyHtml +
     '<div class="asof">기준일: ' + item.asOf + '</div>' +
   '</div>';
 }
@@ -153,8 +170,15 @@ function renderLog(results) {
     }
     const s = item.score;
     const items = Object.entries(s.explain).map(([k, v]) => renderLogItem(item.symbol, k, v)).join('');
+    const anomalySignals = item.anomaly?.signals ?? [];
+    const anomalyItem = anomalySignals.length
+      ? '<div class="log-item"><div class="log-title">거래량·수급 이상징후</div>' +
+        anomalySignals.map((sig) => '<div class="log-reason">· ' + escapeHtml(sig.message) + '</div>').join('') +
+        '</div>'
+      : '';
     return '<details class="log-stock" open><summary>' + item.name + '(' + item.symbol + ') · 기준일 ' + item.asOf +
-      ' · 종합점수 ' + s.totalScore + '(' + s.labelKo + ')</summary>' + items + '</details>';
+      ' · 종합점수 ' + s.totalScore + '(' + s.labelKo + ')' + (item.isCandidate ? ' · ⚡후보' : '') + '</summary>' +
+      items + anomalyItem + '</details>';
   }).join('');
 }
 
@@ -171,6 +195,16 @@ function focusLog(barEl) {
   setTimeout(() => target.classList.remove('highlight'), 1500);
 }
 
+function applyFilter(results) {
+  return chkCandidatesOnly.checked ? results.filter((r) => r.isCandidate) : results;
+}
+
+function renderAll() {
+  const filtered = applyFilter(lastResults);
+  listEl.innerHTML = filtered.map(renderCard).join('');
+  renderLog(filtered);
+}
+
 async function runPredict(refresh) {
   setBusy(true);
   statusEl.textContent = '예측 실행 중... (종목이 많으면 시간이 걸릴 수 있습니다)';
@@ -179,9 +213,8 @@ async function runPredict(refresh) {
     const res = await fetch('/api/predict' + (refresh ? '?refresh=1' : ''));
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    const sorted = [...data.results].sort((a, b) => (b.score?.totalScore ?? -999) - (a.score?.totalScore ?? -999));
-    listEl.innerHTML = sorted.map(renderCard).join('');
-    renderLog(sorted);
+    lastResults = [...data.results].sort((a, b) => (b.score?.totalScore ?? -999) - (a.score?.totalScore ?? -999));
+    renderAll();
     statusEl.textContent = '완료: ' + new Date(data.date).toLocaleString('ko-KR');
   } catch (err) {
     statusEl.textContent = '오류: ' + err.message;
@@ -192,6 +225,7 @@ async function runPredict(refresh) {
 
 btnRun.addEventListener('click', () => runPredict(false));
 btnRefresh.addEventListener('click', () => runPredict(true));
+chkCandidatesOnly.addEventListener('change', renderAll);
 
 // 페이지 로드시 캐시 기반으로 자동 1회 실행
 runPredict(false);

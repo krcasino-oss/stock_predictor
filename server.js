@@ -4,7 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 
-const { predictAll, predictOne, saveDailyReport } = require("./lib/predict");
+const { predictAll, predictOne, saveDailyReport, narrowCandidates } = require("./lib/predict");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3100);
@@ -44,6 +44,25 @@ app.get("/api/predict/:symbol", async (req, res) => {
     const known = symbols.find((s) => s.symbol === symbol);
     const result = await predictOne(known ?? { symbol, name: symbol }, { useCache });
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/** 거래량·수급 이상징후가 포착된 종목만 추려서 보여준다(후보 축소). */
+app.get("/api/candidates", async (req, res) => {
+  try {
+    const symbols = loadSymbols();
+    const useCache = req.query.refresh !== "1";
+    const results = await predictAll(symbols, { useCache });
+    saveDailyReport(results);
+    const candidates = narrowCandidates(results);
+    res.json({
+      date: new Date().toISOString(),
+      total: results.length,
+      candidateCount: candidates.length,
+      results: candidates,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
