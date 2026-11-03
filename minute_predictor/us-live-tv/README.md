@@ -3,22 +3,29 @@
 CNBC·블룸버그·야후파이낸스 등 미국 주식 유튜브 생방송을 골라 보는 프로그램입니다.
 **이 폴더 하나만 있으면 동작**하며 npm 패키지 설치가 필요 없습니다(Node.js 기본 모듈만 사용).
 
-## Termux에서 실행
+## Termux에서 설치 (`~/minute_predictor/us-live-tv`)
 
 ```bash
-pkg install -y nodejs git        # 최초 1회
-cd us-live-tv
+pkg install -y nodejs git
+cd ~
+git clone --depth 1 --filter=blob:none --sparse \
+  -b claude/us-stock-live-broadcast-n4zxoo \
+  https://github.com/krcasino-oss/stock_predictor _live_tmp
+git -C _live_tmp sparse-checkout set minute_predictor/us-live-tv
+mkdir -p ~/minute_predictor
+cp -r _live_tmp/minute_predictor/us-live-tv ~/minute_predictor/
+rm -rf _live_tmp
+```
+
+## 실행
+
+```bash
+cd ~/minute_predictor/us-live-tv
 bash start.sh                    # 또는: node server.js
 ```
 
-크롬에서 접속:
-
-- 일반(루팅 안 된) 폰: `http://127.0.0.1:3300`
-- 루팅된 폰: `http://127.0.0.1:330`
-
-> 기본 포트는 **330**이지만 안드로이드는 1024 미만 포트를 루팅 없이 열 수 없어
-> 자동으로 **3300**으로 실행됩니다. 실제 주소는 Termux 화면에 표시됩니다.
-> 다른 포트: `PORT=8080 node server.js`
+크롬에서 `http://127.0.0.1:3200` 으로 접속합니다.
+다른 포트를 쓰려면 `PORT=8080 node server.js`.
 
 `Termux:API` 앱과 `pkg install termux-api`가 설치되어 있으면 `start.sh`가
 화면 꺼짐 방지(wake-lock)와 브라우저 자동 열기까지 해줍니다.
@@ -41,7 +48,7 @@ bash start.sh                    # 또는: node server.js
 ## 파일 구성
 
 ```
-us-live-tv/
+minute_predictor/us-live-tv/
 ├── server.js        # 서버 (의존성 없음)
 ├── start.sh         # Termux 실행 스크립트
 ├── channels.json    # 기본 채널 목록

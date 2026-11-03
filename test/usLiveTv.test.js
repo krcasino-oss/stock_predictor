@@ -6,7 +6,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 
-const { handler } = require("../us-live-tv/server");
+const { handler } = require("../minute_predictor/us-live-tv/server");
 
 function get(server, urlPath) {
   return new Promise((resolve, reject) => {
@@ -21,7 +21,7 @@ function get(server, urlPath) {
 
 test("독립 실행판 live-utils.js는 메인 버전과 동일해야 한다", () => {
   const a = fs.readFileSync(path.join(__dirname, "../public/live-utils.js"), "utf-8");
-  const b = fs.readFileSync(path.join(__dirname, "../us-live-tv/public/live-utils.js"), "utf-8");
+  const b = fs.readFileSync(path.join(__dirname, "../minute_predictor/us-live-tv/public/live-utils.js"), "utf-8");
   assert.equal(a, b);
 });
 

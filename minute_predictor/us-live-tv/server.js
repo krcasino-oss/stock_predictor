@@ -4,15 +4,14 @@
  * 미국 증시 라이브 방송(유튜브) 골라보기 - 독립 실행 서버
  * Node.js 기본 모듈만 사용하므로 npm install이 필요 없습니다.
  *   실행: node server.js
- *   기본 포트 330 → 권한이 없으면(루팅 안 된 안드로이드) 3300으로 자동 대체
+ *   기본 포트 3200 (변경: PORT=번호 node server.js)
  */
 const http = require("http");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
-const PORT = Number(process.env.PORT || 330);
-const FALLBACK_PORT = Number(process.env.FALLBACK_PORT || 3300);
+const PORT = Number(process.env.PORT || 3200);
 const HOST = process.env.HOST || "0.0.0.0";
 const PUBLIC_DIR = path.join(__dirname, "public");
 const CHANNELS_FILE = path.join(__dirname, "channels.json");
@@ -71,14 +70,11 @@ function localIPs() {
   return out;
 }
 
-function start(port, allowFallback) {
+function start(port) {
   const server = http.createServer(handler);
   server.on("error", (err) => {
-    if (allowFallback && err.code === "EACCES" && port !== FALLBACK_PORT) {
-      console.warn(`⚠️ 포트 ${port}는 권한이 없어 열 수 없습니다(1024 미만 포트는 루팅 없이 사용 불가). 포트 ${FALLBACK_PORT}로 실행합니다.`);
-      return start(FALLBACK_PORT, false);
-    }
     if (err.code === "EADDRINUSE") console.error(`포트 ${port}가 이미 사용 중입니다. PORT=다른번호 node server.js 로 실행하세요.`);
+    else if (err.code === "EACCES") console.error(`포트 ${port}를 열 권한이 없습니다. 1024 이상 포트를 사용하세요.`);
     else console.error(`서버 시작 실패 (포트 ${port}): ${err.message}`);
     process.exit(1);
   });
@@ -90,6 +86,6 @@ function start(port, allowFallback) {
   });
 }
 
-if (require.main === module) start(PORT, true);
+if (require.main === module) start(PORT);
 
 module.exports = { handler };
