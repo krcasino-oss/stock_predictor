@@ -11,6 +11,7 @@ const app = express();
 const PORT = Number(process.env.PORT || 3100);
 
 const SYMBOLS_FILE = path.join(__dirname, "config", "symbols.json");
+const LIVE_CHANNELS_FILE = path.join(__dirname, "config", "live-channels.json");
 
 function loadSymbols() {
   return JSON.parse(fs.readFileSync(SYMBOLS_FILE, "utf-8"));
@@ -35,6 +36,11 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/symbols", (req, res) => {
   res.json(loadSymbols());
+});
+
+/** 미국 증시 라이브 방송(유튜브) 채널 프리셋 목록. */
+app.get("/api/live-channels", (req, res) => {
+  res.json(JSON.parse(fs.readFileSync(LIVE_CHANNELS_FILE, "utf-8")));
 });
 
 /** 현재 서버가 접속 가능한 내부망 IP와 포트 정보를 반환한다(UI 표시용). */
@@ -92,6 +98,7 @@ app.listen(PORT, "0.0.0.0", () => {
   const localIPs = getLocalIPs();
   console.log(`stock-predictor 서버 실행 중 (포트 ${PORT})`);
   console.log(`  - http://localhost:${PORT}`);
+  console.log(`  - http://localhost:${PORT}/live.html (미국 증시 라이브 방송)`);
   if (localIPs.length === 0) {
     console.log("  - (내부망 IP를 찾지 못했습니다. 네트워크 연결 상태를 확인하세요.)");
   } else {

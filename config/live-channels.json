@@ -1,0 +1,9 @@
+[
+  { "name": "CNBC Television", "channelId": "UCrp_UI8XtuYfpiqluWLD7Lw", "handle": "CNBCtelevision", "desc": "CNBC 생방송 (Squawk Box, Closing Bell 등)" },
+  { "name": "CNBC", "channelId": "UCvJJ_dzjViJCoLf5uKUTwoA", "handle": "CNBC", "desc": "CNBC 메인 채널" },
+  { "name": "Bloomberg Television", "channelId": "UCIALMKvObZNtJ6AmdCLP7Lg", "handle": "markets", "desc": "블룸버그 24시간 생방송" },
+  { "name": "Yahoo Finance", "channelId": "UCEAZeUIeJs0IjQiqTCdVSIg", "handle": "YahooFinance", "desc": "야후 파이낸스 장중 생방송" },
+  { "name": "Fox Business", "channelId": "UCCXoCcu9Rp7NPbTzIvogpZg", "handle": "FoxBusiness", "desc": "폭스 비즈니스" },
+  { "name": "Reuters", "channelId": "UChqUTb7kYRX8-EiaN3XFrSQ", "handle": "Reuters", "desc": "로이터 (FOMC·연설 생중계)" },
+  { "name": "Wall Street Journal", "channelId": "UCK7tptUDHh-RYDsdxO1-5QQ", "handle": "wsj", "desc": "월스트리트저널" }
+]
