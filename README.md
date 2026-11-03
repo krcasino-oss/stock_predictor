@@ -22,11 +22,9 @@ npm start
 서버가 뜨면 아래 주소로 접속합니다.
 
 ```
-http://127.0.0.1:330
+http://127.0.0.1:3100
 ```
 
-> 포트는 기본 **330**입니다. 안드로이드는 1024 미만 포트를 루팅 없이 열 수 없어서,
-> 330이 거부되면 자동으로 **3300**으로 실행되고 콘솔에 실제 주소가 표시됩니다.
 > 다른 포트를 쓰려면 `PORT=원하는포트 npm start` 처럼 지정하세요.
 
 ### Termux(폰)에서 실행하는 경우
@@ -45,10 +43,9 @@ npm start
 bash scripts/termux-start.sh
 ```
 
-그 다음 같은 폰의 크롬에서 `http://127.0.0.1:330` 으로 접속합니다
-(루팅 안 된 폰이면 콘솔에 표시된 `http://127.0.0.1:3300`).
+그 다음 같은 폰의 크롬에서 `http://127.0.0.1:3100` 으로 접속합니다.
 
-> 1단계(`kb-trading-bot`, 포트 3000)와 2단계(`stock_predictor`, 포트 330/3300)는
+> 1단계(`kb-trading-bot`, 포트 3000)와 2단계(`stock_predictor`, 포트 3100)는
 > 포트가 달라 동시에 실행해도 서로 충돌하지 않습니다.
 
 ## 📺 미국 증시 라이브 방송 (한글 자막)
@@ -56,7 +53,7 @@ bash scripts/termux-start.sh
 > 예측시스템 없이 **라이브 방송만 따로** 실행하려면 [`minute_predictor/us-live-tv/`](minute_predictor/us-live-tv/README.md) 폴더를 사용하세요
 > (npm 설치 불필요, Termux에서 `bash start.sh`).
 
-서버 실행 후 `http://127.0.0.1:330/live.html`(또는 `:3300`) (또는 메인 화면 상단 버튼)으로 접속합니다.
+서버 실행 후 `http://127.0.0.1:3100/live.html` (또는 메인 화면 상단 버튼)으로 접속합니다.
 
 - CNBC Television, CNBC, Bloomberg TV, Yahoo Finance, Fox Business, Reuters, WSJ 유튜브 생방송을 버튼으로 골라보기
 - **한글 자막**: 한국어 자막이 있으면 그대로, 없으면 영어 자막을 **유튜브 자동번역(한국어)** 으로 켜도록 플레이어에 요청
