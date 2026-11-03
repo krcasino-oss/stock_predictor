@@ -25,6 +25,8 @@ npm start
 http://127.0.0.1:3100
 ```
 
+> 다른 포트를 쓰려면 `PORT=원하는포트 npm start` 처럼 지정하세요.
+
 ### Termux(폰)에서 실행하는 경우
 
 1단계 `kb-trading-bot`과 동일한 방식입니다.
@@ -35,10 +37,33 @@ npm install
 npm start
 ```
 
+또는 화면 꺼짐 방지(wake-lock)와 자동 설치까지 해주는 스크립트를 사용합니다.
+
+```bash
+bash scripts/termux-start.sh
+```
+
 그 다음 같은 폰의 크롬에서 `http://127.0.0.1:3100` 으로 접속합니다.
 
 > 1단계(`kb-trading-bot`, 포트 3000)와 2단계(`stock_predictor`, 포트 3100)는
 > 포트가 달라 동시에 실행해도 서로 충돌하지 않습니다.
+
+## 📺 미국 증시 라이브 방송 (한글 자막)
+
+> 예측시스템 없이 **라이브 방송만 따로** 실행하려면 [`minute_predictor/us-live-tv/`](minute_predictor/us-live-tv/README.md) 폴더를 사용하세요
+> (npm 설치 불필요, Termux에서 `bash start.sh`).
+
+서버 실행 후 `http://127.0.0.1:3100/live.html` (또는 메인 화면 상단 버튼)으로 접속합니다.
+
+- CNBC Television, CNBC, Bloomberg TV, Yahoo Finance, Fox Business, Reuters, WSJ 유튜브 생방송을 버튼으로 골라보기
+- **한글 자막**: 한국어 자막이 있으면 그대로, 없으면 영어 자막을 **유튜브 자동번역(한국어)** 으로 켜도록 플레이어에 요청
+  (자막 ON/OFF, 크기 조절 지원). 라이브 자동번역 제공 여부는 유튜브/방송사에 따라 다릅니다.
+- **멀티뷰**: 최대 4개 방송 동시 시청, 소리는 하나만 선택
+- 뉴욕/한국 시간과 미국 장 상태(프리·정규·애프터) 표시
+- 원하는 유튜브 영상 주소·채널ID·@핸들을 직접 추가(브라우저에 저장)
+- 방송사가 외부 재생을 막은 경우(오류 150 등) **‘유튜브에서 열기’** 로 앱에서 시청 → 앱에서 `자막 → 자동 번역 → 한국어`
+
+기본 채널 목록은 `config/live-channels.json`에서 수정할 수 있습니다.
 
 ## 종목 추가
 
@@ -56,6 +81,7 @@ npm start
 - `GET /api/symbols` : 등록된 종목 목록
 - `GET /api/predict` : 등록된 전체 종목 예측(캐시 사용), `?refresh=1`이면 최신 데이터로 재수집
 - `GET /api/predict/:symbol` : 단일 종목 즉시 예측(등록 여부 무관)
+- `GET /api/live-channels` : 라이브 방송 채널 프리셋 목록
 - `GET /api/candidates` : 거래량·수급 이상징후가 포착된 종목만 추려서 반환(후보 축소), `?refresh=1` 지원
 
 ### 거래량·수급 이상징후(anomaly)
