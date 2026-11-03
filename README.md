@@ -53,6 +53,9 @@ bash scripts/termux-start.sh
 
 ## 📺 미국 증시 라이브 방송 (한글 자막)
 
+> 예측시스템 없이 **라이브 방송만 따로** 실행하려면 [`us-live-tv/`](us-live-tv/README.md) 폴더를 사용하세요
+> (npm 설치 불필요, Termux에서 `bash start.sh`).
+
 서버 실행 후 `http://127.0.0.1:330/live.html`(또는 `:3300`) (또는 메인 화면 상단 버튼)으로 접속합니다.
 
 - CNBC Television, CNBC, Bloomberg TV, Yahoo Finance, Fox Business, Reuters, WSJ 유튜브 생방송을 버튼으로 골라보기
